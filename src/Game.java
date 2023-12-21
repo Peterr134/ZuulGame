@@ -34,40 +34,41 @@ public class Game
      */
     private void createRooms()
     {
-        Room auditoriumLobby, centerWestHallway, centerEastHallway, fortGreenePlace,
-                toNorthWestEntrance, toSouthWestEntrance, auditorium, toNorthEastEntrance,
-                toSouthEastEntrance, southEliot, murral;
+        Room grove, spookyForest, village, stump,
+                graveyard, appleTree, caveEntrance, yourHouse,
+                wizardTower, farms, waypoint, cave;
 
         // create the rooms
-        auditoriumLobby = new Room("in lobby outside the auditorium");
-        centerWestHallway = new Room("in the center west hallway");
-        centerEastHallway = new Room("in the center east hallway");
-        fortGreenePlace = new Room("outside center west on Fort Greene Place");
-        toNorthWestEntrance = new Room("looking toward the north west entrance");
-        toSouthWestEntrance = new Room("looking toard the south west entrance");
-        auditorium = new Room("Auditorium");
-        toNorthEastEntrance = new Room("looking toward the north east entrance");
-        toSouthEastEntrance = new Room("looking toward the south east entrance");
-        southEliot = new Room("outside center east on South Elliot");
-        murral = new Room("at the murral in the lobby");
-        auditorium = new Room("in the auditorium");
+        grove = new Room("You enter an opening in the forest around you.", "The small pool of water nearby reflects the moon.");
+        spookyForest = new Room("The forest here feels spooky. Wafts of mist blanket sections of the ground.", "You feel scared.");
+        village = new Room("You enter your home village", "Most people are asleep right now, save for the occasional resident.");
+        stump = new Room("A strangely large stump sits in the center of the clearing", "You see a strange shape moving closer from far away.");
+        graveyard = new Room("You enter the old graveyard for the village.", "You feel an ectoplasmic presence near you.");
+        appleTree = new Room("You see a large apple tree nearby");
+        caveEntrance = new Room("A dark cave entrance looms in front of you.");
+        yourHouse = new Room("You're right outside your house");
+        wizardTower = new Room("Your magic teachers tower is right ahead of you", "The magic lights nearby have activated, keeping the place well lit.");
+        farms = new Room("You're at the farms you used to work at.", "You see one of the wizards spells helping grow the crops.");
+        waypoint = new Room("A strange stone stands in front of you.");
+        cave = new Room("The cave is pretty cold");
 
         // initialise room exits (north, east, south, west)
-        auditoriumLobby.setExits(murral, centerEastHallway, auditorium, centerWestHallway);
-        centerWestHallway.setExits(toNorthWestEntrance, auditoriumLobby, toSouthWestEntrance, fortGreenePlace);
-        centerEastHallway.setExits(toNorthEastEntrance, southEliot, toSouthEastEntrance, auditoriumLobby);
+        grove.setExits(waypoint, village, caveEntrance, spookyForest);
+        spookyForest.setExits(graveyard, grove, appleTree, stump);
+        village.setExits(yourHouse, farms, wizardTower, grove);
+        cave.setExit("inside",caveEntrance);
 
-        fortGreenePlace.setExits(null, centerWestHallway, null, null);
-        toNorthWestEntrance.setExits(null, null, centerWestHallway, null);
-        toSouthWestEntrance.setExits(centerWestHallway, null, null, null);
-        auditorium.setExits(auditoriumLobby, null, null, null);
-        murral.setExits(null, null, auditoriumLobby, null);
-        southEliot.setExits(null, centerEastHallway, null, null);
-        toNorthEastEntrance.setExits(null, null, centerEastHallway, null);
-        toSouthEastEntrance.setExits(centerEastHallway, null, null, null);
+        stump.setExits(null, spookyForest, null, null);
+        graveyard.setExits(null, null, spookyForest, null);
+        appleTree.setExits(spookyForest, null, null, null);
+        caveEntrance.setExits(grove, null, null, null);
+        waypoint.setExits(null, null, grove, null);
+        farms.setExits(null, null, null, village);
+        yourHouse.setExits(null, null, village, null);
+        wizardTower.setExits(village, null, null, null);
 
 
-        currentRoom = auditoriumLobby;  // start game outside
+        currentRoom = yourHouse;  // start game outside
     }
 
     /**
@@ -94,22 +95,28 @@ public class Game
     private void printWelcome()
     {
         System.out.println();
-        System.out.println("Welcome to the World of Zuul!");
-        System.out.println("World of Zuul is a new, incredibly boring adventure game.");
+        System.out.println("Welcome to the World of Not-Zuul!");
+        System.out.println("World of Not-Zuul is a new, incredibly Not-boring adventure game.");
         System.out.println("Type 'help' if you need help.");
+        System.out.println("You play as a young wizard apprentice");
+        Time.initializeTimeOfDay();
         System.out.println();
-        System.out.println("You are " + currentRoom.getDescription());
+        System.out.println(currentRoom.getDescription());
+        printLocationInfo();
+    }
+
+    private void printLocationInfo(){
         System.out.print("You can go: ");
-        if(currentRoom.northExit != null) {
+        if(currentRoom.getExit("north") != null) {
             System.out.print("north ");
         }
-        if(currentRoom.eastExit != null) {
+        if(currentRoom.getExit("east") != null) {
             System.out.print("east ");
         }
-        if(currentRoom.southExit != null) {
+        if(currentRoom.getExit("south") != null) {
             System.out.print("south ");
         }
-        if(currentRoom.westExit != null) {
+        if(currentRoom.getExit("west") != null) {
             System.out.print("west ");
         }
         System.out.println();
@@ -152,9 +159,6 @@ public class Game
      */
     private void printHelp()
     {
-        System.out.println("You are lost. You are alone. You wander");
-        System.out.println("around at the university.");
-        System.out.println();
         System.out.println("Your command words are:");
         System.out.println("   go quit help");
     }
@@ -176,38 +180,29 @@ public class Game
         // Try to leave current room.
         Room nextRoom = null;
         if(direction.equals("north")) {
-            nextRoom = currentRoom.northExit;
+            nextRoom = currentRoom.getExit("north");
         }
         if(direction.equals("east")) {
-            nextRoom = currentRoom.eastExit;
+            nextRoom = currentRoom.getExit("east");
         }
         if(direction.equals("south")) {
-            nextRoom = currentRoom.southExit;
+            nextRoom = currentRoom.getExit("south");
         }
         if(direction.equals("west")) {
-            nextRoom = currentRoom.westExit;
+            nextRoom = currentRoom.getExit("west");
         }
 
         if (nextRoom == null) {
-            System.out.println("There is no door!");
+            System.out.println("You decide against going that way...");
         }
         else {
             currentRoom = nextRoom;
-            System.out.println("You are " + currentRoom.getDescription());
-            System.out.print("Exits: ");
-            if(currentRoom.northExit != null) {
-                System.out.print("north ");
+            Time.changeTime(15);
+            System.out.println(currentRoom.getDescription());
+            if(Time.isNight() && currentRoom.getNightDescription() != null) {
+                System.out.println(currentRoom.getNightDescription());
             }
-            if(currentRoom.eastExit != null) {
-                System.out.print("east ");
-            }
-            if(currentRoom.southExit != null) {
-                System.out.print("south ");
-            }
-            if(currentRoom.westExit != null) {
-                System.out.print("west ");
-            }
-            System.out.println();
+            printLocationInfo();
         }
     }
 
