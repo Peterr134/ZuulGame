@@ -15,6 +15,7 @@
  * @version 2016.02.29
  */
 
+import java.util.HashMap;
 public class Game
 {
     private Parser parser;
@@ -36,27 +37,33 @@ public class Game
     {
         Room grove, spookyForest, village, stump,
                 graveyard, appleTree, caveEntrance, yourHouse,
-                wizardTower, farms, waypoint, cave;
+                wizardTower, farms, waypoint, cave, sleepRoom;
 
         // create the rooms
-        grove = new Room("You enter an opening in the forest around you.", "The small pool of water nearby reflects the moon.");
-        spookyForest = new Room("The forest here feels spooky. Wafts of mist blanket sections of the ground.", "You feel scared.");
-        village = new Room("You enter your home village", "Most people are asleep right now, save for the occasional resident.");
-        stump = new Room("A strangely large stump sits in the center of the clearing", "You see a strange shape moving closer from far away.");
-        graveyard = new Room("You enter the old graveyard for the village.", "You feel an ectoplasmic presence near you.");
-        appleTree = new Room("You see a large apple tree nearby");
-        caveEntrance = new Room("A dark cave entrance looms in front of you.");
-        yourHouse = new Room("You're right outside your house");
-        wizardTower = new Room("Your magic teachers tower is right ahead of you", "The magic lights nearby have activated, keeping the place well lit.");
-        farms = new Room("You're at the farms you used to work at.", "You see one of the wizards spells helping grow the crops.");
-        waypoint = new Room("A strange stone stands in front of you.");
-        cave = new Room("The cave is pretty cold");
+        grove = new Room("grove","You enter an opening in the forest around you.", "The small pool of water nearby reflects the moon.");
+        spookyForest = new Room("spookyForest","The forest here feels spooky. Wafts of mist blanket sections of the ground.", "You feel scared.");
+        village = new Room("village","You enter your home village", "Most people are asleep right now, save for the occasional resident.");
+        stump = new Room("stump","A strangely large stump sits in the center of the clearing", "You see a strange shape moving closer from far away.");
+        graveyard = new Room("graveyard","You enter the old graveyard for the village.", "You feel an ectoplasmic presence near you.");
+        appleTree = new Room("appleTree","You see a large apple tree nearby");
+        caveEntrance = new Room("caveEntrance","A dark cave entrance looms in front of you.");
+        yourHouse = new Room("yourHouse","You're right outside your house");
+        wizardTower = new Room("wizardTower","Your magic teachers tower is right ahead of you", "The magic lights nearby have activated, keeping the place well lit.");
+        farms = new Room("farms","You're at the farms you used to work at.", "You see one of the wizards spells helping grow the crops.");
+        waypoint = new Room("waypoint","A strange stone stands in front of you.");
+        cave = new Room("cave","This is the end of the game for now! good job!");
+        sleepRoom = new Room("sleepRoom");
 
         // initialise room exits (north, east, south, west)
         grove.setExits(waypoint, village, caveEntrance, spookyForest);
         spookyForest.setExits(graveyard, grove, appleTree, stump);
         village.setExits(yourHouse, farms, wizardTower, grove);
-        cave.setExit("inside",caveEntrance);
+        caveEntrance.setExit("inside",cave);
+        cave.setExit("outside", caveEntrance);
+        yourHouse.setExit("sleep", sleepRoom);
+        sleepRoom.setExit("outdoors", yourHouse);
+        wizardTower.setItem("broom");
+
 
         stump.setExits(null, spookyForest, null, null);
         graveyard.setExits(null, null, spookyForest, null);
@@ -85,6 +92,18 @@ public class Game
         while (! finished) {
             Command command = parser.getCommand();
             finished = processCommand(command);
+            if(currentRoom.getRoomName() != null) {
+                if (currentRoom.getRoomName().equals("sleepRoom")) {
+                    System.out.println("You fall asleep");
+                    if (Time.isNight()) {
+                        Time.setTimeOfDay(480);
+                        System.out.println("You wake up in the day");
+                    } else {
+                        Time.setTimeOfDay(1200);
+                        System.out.println("You wake up in the night");
+                    }
+                }
+            }
         }
         System.out.println("Thank you for playing.  Good bye.");
     }
@@ -107,18 +126,7 @@ public class Game
 
     private void printLocationInfo(){
         System.out.print("You can go: ");
-        if(currentRoom.getExit("north") != null) {
-            System.out.print("north ");
-        }
-        if(currentRoom.getExit("east") != null) {
-            System.out.print("east ");
-        }
-        if(currentRoom.getExit("south") != null) {
-            System.out.print("south ");
-        }
-        if(currentRoom.getExit("west") != null) {
-            System.out.print("west ");
-        }
+        System.out.print(currentRoom.getExitString());
         System.out.println();
     }
 
@@ -137,6 +145,7 @@ public class Game
         }
 
         String commandWord = command.getCommandWord();
+        String secondWord = command.getSecondWord();
         if (commandWord.equals("help")) {
             printHelp();
         }
@@ -145,6 +154,20 @@ public class Game
         }
         else if (commandWord.equals("quit")) {
             wantToQuit = quit(command);
+        }else if (commandWord.equals("checkInv")){
+            System.out.print("You see: ");
+            for(String item : Item.heldItems) {
+                System.out.print(" " + item);
+            }
+            System.out.println();
+        }else if(commandWord.equals("grab")){
+            if(currentRoom.getItem().equalsIgnoreCase(secondWord)){
+                Item.heldItems.add(currentRoom.getItem());
+                System.out.println("You obtain the " + currentRoom.getItem());
+                currentRoom.setItem("");
+            }else{
+                System.out.println("You don't see anything to grab...");
+            }
         }
 
         return wantToQuit;
@@ -179,19 +202,7 @@ public class Game
 
         // Try to leave current room.
         Room nextRoom = null;
-        if(direction.equals("north")) {
-            nextRoom = currentRoom.getExit("north");
-        }
-        if(direction.equals("east")) {
-            nextRoom = currentRoom.getExit("east");
-        }
-        if(direction.equals("south")) {
-            nextRoom = currentRoom.getExit("south");
-        }
-        if(direction.equals("west")) {
-            nextRoom = currentRoom.getExit("west");
-        }
-
+        nextRoom = currentRoom.getExit(direction);
         if (nextRoom == null) {
             System.out.println("You decide against going that way...");
         }
@@ -199,6 +210,9 @@ public class Game
             currentRoom = nextRoom;
             Time.changeTime(15);
             System.out.println(currentRoom.getDescription());
+            if(!currentRoom.getItem().isEmpty()){
+                System.out.println("You see a " + currentRoom.getItem() + " nearby");
+            }
             if(Time.isNight() && currentRoom.getNightDescription() != null) {
                 System.out.println(currentRoom.getNightDescription());
             }

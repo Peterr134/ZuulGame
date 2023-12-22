@@ -19,6 +19,8 @@ public class Room
     public String description;
     private HashMap<String, Room> exits;
     public String nightDescription;
+    private String roomName;
+    private String item;
 
     /**
      * Create a room described "description". Initially, it has
@@ -26,13 +28,25 @@ public class Room
      * "an open court yard".
      * @param description The room's description.
      */
-    public Room(String description)
+    public Room(String roomName, String description)
     {
         this.description = description;
         exits = new HashMap<String, Room>();
+        this.roomName = roomName;
     }
 
-    public Room(String description, String nightDescription)
+    public Room(String roomName){
+        description = "";
+        nightDescription = "";
+        exits = new HashMap<String, Room>();
+        this.roomName = roomName;
+    }
+
+    public String getRoomName() {
+        return roomName;
+    }
+
+    public Room(String roomName, String description, String nightDescription)
     {
         this.description = description;
         this.nightDescription = nightDescription;
@@ -83,5 +97,26 @@ public class Room
 
     public String getNightDescription() {
         return nightDescription;
+    }
+
+    public String getItem() {
+        if(item != null) {
+            return item;
+        }else{
+            return "";
+        }
+    }
+
+    public void setItem(String item) {
+        this.item = item;
+    }
+
+    public String getExitString() {
+        String returnString = "";
+        Set<String> keys = exits.keySet();
+        for (String exit : keys){
+            returnString += " " + exit;
+        }
+        return returnString;
     }
 }
